@@ -1,0 +1,106 @@
+
+export interface DictionaryDefinition {
+  definition: string;
+  synonyms: string[];
+  antonyms: string[];
+  example?: string;
+}
+
+export interface DictionaryMeaning {
+  partOfSpeech: string;
+  definitions: DictionaryDefinition[];
+  synonyms: string[];
+  antonyms: string[];
+}
+
+export interface DictionaryPhonetic {
+  text: string;
+  audio?: string;
+  sourceUrl?: string;
+}
+
+export interface DictionaryApiResponse {
+  word: string;
+  phonetic?: string;
+  phonetics: DictionaryPhonetic[];
+  meanings: DictionaryMeaning[];
+  license?: {
+    name: string;
+    url: string;
+  };
+  sourceUrls: string[];
+}
+
+const API_BASE_URL = 'https://api.dictionaryapi.dev/api/v2/entries/en';
+
+export class DictionaryApiService {
+  private static async makeRequest(word: string): Promise<DictionaryApiResponse[]> {
+    const response = await fetch(`${API_BASE_URL}/${word}`, {
+      method: 'GET'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
+    }
+    
+    return response.json();
+  }
+
+  static async getWordData(word: string) {
+    try {
+      const data = await this.makeRequest(word);
+      
+      if (!data || data.length === 0) {
+        throw new Error('No data found for this word');
+      }
+
+      const wordData = data[0];
+      
+      // Extract all definitions from all meanings
+      const allDefinitions: { definition: string; partOfSpeech: string; example?: string }[] = [];
+      const allSynonyms: string[] = [];
+      const allAntonyms: string[] = [];
+      const allExamples: string[] = [];
+
+      wordData.meanings.forEach(meaning => {
+        meaning.definitions.forEach(def => {
+          allDefinitions.push({
+            definition: def.definition,
+            partOfSpeech: meaning.partOfSpeech,
+            example: def.example
+          });
+          
+          // Collect examples
+          if (def.example) {
+            allExamples.push(def.example);
+          }
+          
+          // Collect synonyms and antonyms
+          allSynonyms.push(...def.synonyms);
+          allAntonyms.push(...def.antonyms);
+        });
+        
+        // Also collect synonyms/antonyms from meaning level
+        allSynonyms.push(...meaning.synonyms);
+        allAntonyms.push(...meaning.antonyms);
+      });
+
+      // Get pronunciation - prefer the one with audio
+      const pronunciationWithAudio = wordData.phonetics.find(p => p.audio && p.audio.length > 0);
+      const pronunciation = pronunciationWithAudio?.text || wordData.phonetic || wordData.phonetics[0]?.text || '';
+
+      return {
+        word: wordData.word,
+        pronunciation,
+        audioUrl: pronunciationWithAudio?.audio,
+        definitions: allDefinitions,
+        synonyms: [...new Set(allSynonyms)], // Remove duplicates
+        antonyms: [...new Set(allAntonyms)], // Remove duplicates
+        examples: allExamples
+      };
+    } catch (error) {
+      console.error(`Failed to fetch data for word: ${word}`, error);
+      throw error;
+    }
+  }
+}

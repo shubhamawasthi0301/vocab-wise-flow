@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { VocabularyWord } from '@/types/vocabulary';
-import { WordsApiService } from '@/services/wordsApi';
+import { DictionaryApiService } from '@/services/dictionaryApi';
 import { VOCABULARY_WORD_LIST, WORD_CATEGORIES } from '@/data/wordList';
 
 // Function to get a random image for a word
@@ -28,7 +28,7 @@ export function useVocabularyData() {
 
   const fetchWordData = async (word: string): Promise<VocabularyWord | null> => {
     try {
-      const data = await WordsApiService.getCompleteWordData(word);
+      const data = await DictionaryApiService.getWordData(word);
       
       if (data.definitions.length === 0) {
         console.warn(`No definitions found for word: ${word}`);
@@ -40,9 +40,9 @@ export function useVocabularyData() {
 
       return {
         id: word,
-        word: word,
+        word: data.word,
         definition: primaryDefinition.definition,
-        pronunciation: '', // WordsAPI doesn't provide pronunciation in the free tier
+        pronunciation: data.pronunciation,
         partOfSpeech: primaryDefinition.partOfSpeech || 'unknown',
         category: WORD_CATEGORIES[word as keyof typeof WORD_CATEGORIES] || 'General',
         example: example,
@@ -74,7 +74,7 @@ export function useVocabularyData() {
       setVocabularyWords(validWords);
     } catch (err) {
       console.error('Error loading vocabulary:', err);
-      setError('Failed to load vocabulary. Please check your API configuration.');
+      setError('Failed to load vocabulary from Dictionary API.');
       
       // Fallback to a minimal dataset if API fails
       setVocabularyWords([{

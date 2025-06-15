@@ -85,7 +85,7 @@ export function FlashcardApp() {
             <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
             <p className="text-red-600 text-lg mb-4">{error}</p>
             <p className="text-gray-500 text-sm mb-6">
-              There was an issue connecting to the WordsAPI service.
+              There was an issue connecting to the Dictionary API service.
             </p>
             <Button onClick={refetch} className="gap-2">
               <RotateCcw className="h-4 w-4" />
@@ -120,7 +120,7 @@ export function FlashcardApp() {
         </div>
         <p className="text-gray-600 text-lg">Smart vocabulary learning with adaptive repetition</p>
         <Badge variant="outline" className="mt-2">
-          Powered by WordsAPI
+          Powered by Dictionary API
         </Badge>
       </div>
 
