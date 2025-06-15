@@ -1,0 +1,58 @@
+
+// Common vocabulary words for learning
+export const VOCABULARY_WORD_LIST = [
+  'perspicacious',
+  'serendipity',
+  'ephemeral',
+  'ubiquitous',
+  'mellifluous',
+  'quintessential',
+  'cacophony',
+  'surreptitious',
+  'magnanimous',
+  'ineffable',
+  'eloquent',
+  'gregarious',
+  'lethargic',
+  'meticulous',
+  'nonchalant',
+  'ostentatious',
+  'pragmatic',
+  'resilient',
+  'vicarious',
+  'whimsical',
+  'ambiguous',
+  'benevolent',
+  'capricious',
+  'diligent',
+  'empathetic',
+  'facetious',
+  'gratuitous',
+  'hypothetical',
+  'impeccable',
+  'judicious'
+];
+
+// Categories for organizing words
+export const WORD_CATEGORIES = {
+  'perspicacious': 'Intellectual',
+  'serendipity': 'Abstract Concepts',
+  'ephemeral': 'Descriptive',
+  'ubiquitous': 'Descriptive',
+  'mellifluous': 'Sensory',
+  'quintessential': 'Descriptive',
+  'cacophony': 'Sensory',
+  'surreptitious': 'Behavior',
+  'magnanimous': 'Character',
+  'ineffable': 'Abstract Concepts',
+  'eloquent': 'Communication',
+  'gregarious': 'Personality',
+  'lethargic': 'Energy',
+  'meticulous': 'Attention',
+  'nonchalant': 'Attitude',
+  'ostentatious': 'Behavior',
+  'pragmatic': 'Approach',
+  'resilient': 'Character',
+  'vicarious': 'Experience',
+  'whimsical': 'Personality'
+};

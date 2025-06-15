@@ -1,17 +1,16 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { RotateCcw, TrendingUp, Brain, BookOpen } from 'lucide-react';
+import { RotateCcw, TrendingUp, Brain, BookOpen, AlertCircle, Loader2 } from 'lucide-react';
 import { Flashcard } from './Flashcard';
 import { PerformanceDashboard } from './PerformanceDashboard';
 import { useVocabularyData } from '@/hooks/useVocabularyData';
 import { useSpacedRepetition } from '@/hooks/useSpacedRepetition';
 
 export function FlashcardApp() {
-  const { vocabularyWords } = useVocabularyData();
+  const { vocabularyWords, loading, error, refetch } = useVocabularyData();
   const {
     currentCard,
     sessionStats,
@@ -46,6 +45,58 @@ export function FlashcardApp() {
     setShowDashboard(false);
   };
 
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Brain className="h-8 w-8 text-indigo-600" />
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              VocabMaster
+            </h1>
+          </div>
+        </div>
+        
+        <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
+          <CardContent className="p-12 text-center">
+            <Loader2 className="h-16 w-16 text-indigo-600 mx-auto mb-4 animate-spin" />
+            <p className="text-gray-600 text-lg mb-2">Loading vocabulary words...</p>
+            <p className="text-gray-500 text-sm">Fetching definitions and examples from WordsAPI</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Brain className="h-8 w-8 text-indigo-600" />
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              VocabMaster
+            </h1>
+          </div>
+        </div>
+        
+        <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm border-red-200">
+          <CardContent className="p-12 text-center">
+            <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+            <p className="text-red-600 text-lg mb-4">{error}</p>
+            <p className="text-gray-500 text-sm mb-6">
+              Make sure to add your WordsAPI key in the API service configuration.
+            </p>
+            <Button onClick={refetch} className="gap-2">
+              <RotateCcw className="h-4 w-4" />
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (showDashboard) {
     return (
       <PerformanceDashboard
@@ -68,6 +119,9 @@ export function FlashcardApp() {
           </h1>
         </div>
         <p className="text-gray-600 text-lg">Smart vocabulary learning with adaptive repetition</p>
+        <Badge variant="outline" className="mt-2">
+          Powered by WordsAPI
+        </Badge>
       </div>
 
       {/* Progress Section */}

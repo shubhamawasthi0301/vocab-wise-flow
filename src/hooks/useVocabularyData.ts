@@ -1,124 +1,106 @@
 
 import { useState, useEffect } from 'react';
 import { VocabularyWord } from '@/types/vocabulary';
+import { WordsApiService } from '@/services/wordsApi';
+import { VOCABULARY_WORD_LIST, WORD_CATEGORIES } from '@/data/wordList';
 
-const SAMPLE_VOCABULARY: VocabularyWord[] = [
-  {
-    id: '1',
-    word: 'Serendipity',
-    definition: 'The occurrence and development of events by chance in a happy or beneficial way',
-    pronunciation: 'ser-ən-ˈdi-pə-tē',
-    partOfSpeech: 'noun',
-    category: 'Abstract Concepts',
-    example: 'Meeting her old friend at the coffee shop was pure serendipity.',
-    synonyms: ['chance', 'fortune', 'luck', 'providence'],
-    imageUrl: 'https://images.unsplash.com/photo-1518640467707-6811f4a6ab73?w=400&h=300&fit=crop'
-  },
-  {
-    id: '2',
-    word: 'Ephemeral',
-    definition: 'Lasting for a very short time',
-    pronunciation: 'ɪˈfem(ə)rəl',
-    partOfSpeech: 'adjective',
-    category: 'Descriptive',
-    example: 'The beauty of cherry blossoms is ephemeral, lasting only a few weeks.',
-    synonyms: ['temporary', 'fleeting', 'transient', 'brief'],
-    imageUrl: 'https://images.unsplash.com/photo-1522383225653-ed111181a951?w=400&h=300&fit=crop'
-  },
-  {
-    id: '3',
-    word: 'Ubiquitous',
-    definition: 'Present, appearing, or found everywhere',
-    pronunciation: 'yo͞oˈbikwədəs',
-    partOfSpeech: 'adjective',
-    category: 'Descriptive',
-    example: 'Smartphones have become ubiquitous in modern society.',
-    synonyms: ['omnipresent', 'pervasive', 'universal', 'widespread'],
-    imageUrl: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=300&fit=crop'
-  },
-  {
-    id: '4',
-    word: 'Mellifluous',
-    definition: 'Sweet or musical; pleasant to hear',
-    pronunciation: 'məˈliflo͞oəs',
-    partOfSpeech: 'adjective',
-    category: 'Sensory',
-    example: 'Her mellifluous voice captivated the entire audience.',
-    synonyms: ['melodious', 'harmonious', 'sweet-sounding', 'musical'],
-    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop'
-  },
-  {
-    id: '5',
-    word: 'Perspicacious',
-    definition: 'Having a ready insight into and understanding of things',
-    pronunciation: 'ˌpərspɪˈkeɪʃəs',
-    partOfSpeech: 'adjective',
-    category: 'Intellectual',
-    example: 'The detective\'s perspicacious observations solved the case quickly.',
-    synonyms: ['perceptive', 'astute', 'shrewd', 'discerning'],
-    imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop'
-  },
-  {
-    id: '6',
-    word: 'Quintessential',
-    definition: 'Representing the most perfect example of a quality or class',
-    pronunciation: 'ˌkwin(t)əˈsen(t)SHəl',
-    partOfSpeech: 'adjective',
-    category: 'Descriptive',
-    example: 'Paris is the quintessential romantic city.',
-    synonyms: ['typical', 'archetypal', 'classic', 'ideal'],
-    imageUrl: 'https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=400&h=300&fit=crop'
-  },
-  {
-    id: '7',
-    word: 'Cacophony',
-    definition: 'A harsh, discordant mixture of sounds',
-    pronunciation: 'kəˈkäfənē',
-    partOfSpeech: 'noun',
-    category: 'Sensory',
-    example: 'The construction site created a cacophony of drilling and hammering.',
-    synonyms: ['discord', 'din', 'racket', 'clamor'],
-    imageUrl: 'https://images.unsplash.com/photo-1415734117253-603b0c3c3b3c?w=400&h=300&fit=crop'
-  },
-  {
-    id: '8',
-    word: 'Surreptitious',
-    definition: 'Kept secret, especially because it would not be approved of',
-    pronunciation: 'ˌsərəpˈtiSHəs',
-    partOfSpeech: 'adjective',
-    category: 'Behavior',
-    example: 'He cast a surreptitious glance at his watch during the meeting.',
-    synonyms: ['secretive', 'stealthy', 'furtive', 'covert'],
-    imageUrl: 'https://images.unsplash.com/photo-1574192324001-ee41e18ed679?w=400&h=300&fit=crop'
-  },
-  {
-    id: '9',
-    word: 'Magnanimous',
-    definition: 'Very generous or forgiving, especially toward a rival or less powerful person',
-    pronunciation: 'maɡˈnanəməs',
-    partOfSpeech: 'adjective',
-    category: 'Character',
-    example: 'Despite winning, she was magnanimous toward her defeated opponent.',
-    synonyms: ['generous', 'charitable', 'benevolent', 'noble'],
-    imageUrl: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&h=300&fit=crop'
-  },
-  {
-    id: '10',
-    word: 'Ineffable',
-    definition: 'Too great or extreme to be expressed or described in words',
-    pronunciation: 'ɪnˈɛfəbəl',
-    partOfSpeech: 'adjective',
-    category: 'Abstract Concepts',
-    example: 'The beauty of the sunset was ineffable, leaving everyone speechless.',
-    synonyms: ['indescribable', 'inexpressible', 'unspeakable', 'sublime'],
-    imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop'
-  }
-];
+// Function to get a random image for a word
+const getRandomImageForWord = (word: string): string => {
+  const imageIds = [
+    'photo-1518640467707-6811f4a6ab73',
+    'photo-1486312338219-ce68d2c6f44d',
+    'photo-1581091226825-a6a2a5aee158',
+    'photo-1465146344425-f00d5f5c8f07',
+    'photo-1500673922987-e212871fec22',
+    'photo-1501286353178-1ec881214838',
+    'photo-1582562124811-c09040d0a901',
+    'photo-1472396961693-142e6e269027'
+  ];
+  
+  const randomId = imageIds[Math.floor(Math.random() * imageIds.length)];
+  return `https://images.unsplash.com/${randomId}?w=400&h=300&fit=crop`;
+};
 
 export function useVocabularyData() {
-  const [vocabularyWords] = useState<VocabularyWord[]>(SAMPLE_VOCABULARY);
+  const [vocabularyWords, setVocabularyWords] = useState<VocabularyWord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchWordData = async (word: string): Promise<VocabularyWord | null> => {
+    try {
+      const data = await WordsApiService.getCompleteWordData(word);
+      
+      if (data.definitions.length === 0) {
+        console.warn(`No definitions found for word: ${word}`);
+        return null;
+      }
+
+      const primaryDefinition = data.definitions[0];
+      const example = data.examples[0] || `This is an example sentence using the word ${word}.`;
+
+      return {
+        id: word,
+        word: word,
+        definition: primaryDefinition.definition,
+        pronunciation: '', // WordsAPI doesn't provide pronunciation in the free tier
+        partOfSpeech: primaryDefinition.partOfSpeech || 'unknown',
+        category: WORD_CATEGORIES[word as keyof typeof WORD_CATEGORIES] || 'General',
+        example: example,
+        synonyms: data.synonyms.slice(0, 4), // Limit to 4 synonyms
+        imageUrl: getRandomImageForWord(word)
+      };
+    } catch (error) {
+      console.error(`Failed to fetch data for word: ${word}`, error);
+      return null;
+    }
+  };
+
+  const loadVocabularyWords = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Take first 15 words from the list to start with
+      const wordsToFetch = VOCABULARY_WORD_LIST.slice(0, 15);
+      const wordPromises = wordsToFetch.map(word => fetchWordData(word));
+      
+      const results = await Promise.all(wordPromises);
+      const validWords = results.filter((word): word is VocabularyWord => word !== null);
+      
+      if (validWords.length === 0) {
+        throw new Error('No vocabulary words could be loaded');
+      }
+
+      setVocabularyWords(validWords);
+    } catch (err) {
+      console.error('Error loading vocabulary:', err);
+      setError('Failed to load vocabulary. Please check your API configuration.');
+      
+      // Fallback to a minimal dataset if API fails
+      setVocabularyWords([{
+        id: 'fallback',
+        word: 'Learning',
+        definition: 'The process of acquiring knowledge or skills',
+        pronunciation: 'ˈlərniNG',
+        partOfSpeech: 'noun',
+        category: 'Education',
+        example: 'Learning new vocabulary is an important part of language development.',
+        synonyms: ['studying', 'education', 'instruction'],
+        imageUrl: getRandomImageForWord('learning')
+      }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadVocabularyWords();
+  }, []);
 
   return {
-    vocabularyWords
+    vocabularyWords,
+    loading,
+    error,
+    refetch: loadVocabularyWords
   };
 }
