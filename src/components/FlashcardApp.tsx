@@ -3,9 +3,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { RotateCcw, TrendingUp, Brain, BookOpen, AlertCircle, Loader2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RotateCcw, TrendingUp, Brain, BookOpen, AlertCircle, Loader2, BarChart3 } from 'lucide-react';
 import { Flashcard } from './Flashcard';
 import { PerformanceDashboard } from './PerformanceDashboard';
+import { Analytics } from './Analytics';
 import { useVocabularyData } from '@/hooks/useVocabularyData';
 import { useSpacedRepetition } from '@/hooks/useSpacedRepetition';
 
@@ -15,6 +17,7 @@ export function FlashcardApp() {
     currentCard,
     sessionStats,
     totalWordsStudied,
+    wordPerformances,
     getNextCard,
     recordResponse,
     resetSession,
@@ -23,6 +26,7 @@ export function FlashcardApp() {
 
   const [showDashboard, setShowDashboard] = useState(false);
   const [sessionProgress, setSessionProgress] = useState(0);
+  const [activeTab, setActiveTab] = useState('flashcards');
 
   useEffect(() => {
     if (sessionStats.answered > 0) {
@@ -43,6 +47,7 @@ export function FlashcardApp() {
     resetSession();
     setSessionProgress(0);
     setShowDashboard(false);
+    setActiveTab('flashcards');
   };
 
   if (loading) {
@@ -109,7 +114,7 @@ export function FlashcardApp() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Header */}
       <div className="text-center mb-8">
         <div className="flex items-center justify-center gap-2 mb-4">
@@ -124,86 +129,110 @@ export function FlashcardApp() {
         </Badge>
       </div>
 
-      {/* Progress Section */}
-      <Card className="mb-6 border-0 shadow-lg bg-white/70 backdrop-blur-sm">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <Badge variant="secondary" className="px-3 py-1">
-                <BookOpen className="h-4 w-4 mr-1" />
-                Session: {sessionStats.answered}/20
-              </Badge>
-              <Badge variant="outline" className="px-3 py-1">
-                <TrendingUp className="h-4 w-4 mr-1" />
-                Total: {totalWordsStudied} words
-              </Badge>
-            </div>
-            <Button
-              onClick={handleNewSession}
-              variant="outline"
-              size="sm"
-              className="gap-2"
-            >
-              <RotateCcw className="h-4 w-4" />
-              New Session
-            </Button>
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>Session Progress</span>
-              <span>{Math.round(sessionProgress)}%</span>
-            </div>
-            <Progress value={sessionProgress} className="h-2" />
-          </div>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="flashcards" className="gap-2">
+            <BookOpen className="h-4 w-4" />
+            Flashcards
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Analytics
+          </TabsTrigger>
+        </TabsList>
 
-          {sessionStats.answered > 0 && (
-            <div className="flex gap-4 mt-4 text-sm">
-              <span className="text-green-600">
-                Easy: {sessionStats.easy}
-              </span>
-              <span className="text-yellow-600">
-                Medium: {sessionStats.medium}
-              </span>
-              <span className="text-red-600">
-                Hard: {sessionStats.hard}
-              </span>
-              <span className="text-gray-600">
-                Accuracy: {Math.round((sessionStats.easy / sessionStats.answered) * 100)}%
-              </span>
-            </div>
+        <TabsContent value="flashcards" className="space-y-6">
+          {/* Progress Section */}
+          <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <Badge variant="secondary" className="px-3 py-1">
+                    <BookOpen className="h-4 w-4 mr-1" />
+                    Session: {sessionStats.answered}/20
+                  </Badge>
+                  <Badge variant="outline" className="px-3 py-1">
+                    <TrendingUp className="h-4 w-4 mr-1" />
+                    Total: {totalWordsStudied} words
+                  </Badge>
+                </div>
+                <Button
+                  onClick={handleNewSession}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  New Session
+                </Button>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Session Progress</span>
+                  <span>{Math.round(sessionProgress)}%</span>
+                </div>
+                <Progress value={sessionProgress} className="h-2" />
+              </div>
+
+              {sessionStats.answered > 0 && (
+                <div className="flex gap-4 mt-4 text-sm">
+                  <span className="text-green-600">
+                    Easy: {sessionStats.easy}
+                  </span>
+                  <span className="text-yellow-600">
+                    Medium: {sessionStats.medium}
+                  </span>
+                  <span className="text-red-600">
+                    Hard: {sessionStats.hard}
+                  </span>
+                  <span className="text-gray-600">
+                    Accuracy: {Math.round((sessionStats.easy / sessionStats.answered) * 100)}%
+                  </span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Flashcard */}
+          {currentCard ? (
+            <Flashcard
+              word={currentCard}
+              onResponse={handleCardResponse}
+            />
+          ) : (
+            <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
+              <CardContent className="p-12 text-center">
+                <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg">No more cards in this session!</p>
+                <Button onClick={handleNewSession} className="mt-4">
+                  Start New Session
+                </Button>
+              </CardContent>
+            </Card>
           )}
-        </CardContent>
-      </Card>
 
-      {/* Flashcard */}
-      {currentCard ? (
-        <Flashcard
-          word={currentCard}
-          onResponse={handleCardResponse}
-        />
-      ) : (
-        <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
-          <CardContent className="p-12 text-center">
-            <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg">No more cards in this session!</p>
-            <Button onClick={handleNewSession} className="mt-4">
-              Start New Session
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+          {/* Show dashboard hint */}
+          {totalWordsStudied >= 40 && totalWordsStudied < 50 && (
+            <Card className="mt-6 border-amber-200 bg-amber-50">
+              <CardContent className="p-4 text-center">
+                <p className="text-amber-800">
+                  🎯 Keep going! After {50 - totalWordsStudied} more words, you'll unlock your performance insights dashboard!
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
 
-      {/* Show dashboard hint */}
-      {totalWordsStudied >= 40 && totalWordsStudied < 50 && (
-        <Card className="mt-6 border-amber-200 bg-amber-50">
-          <CardContent className="p-4 text-center">
-            <p className="text-amber-800">
-              🎯 Keep going! After {50 - totalWordsStudied} more words, you'll unlock your performance insights dashboard!
-            </p>
-          </CardContent>
-        </Card>
-      )}
+        <TabsContent value="analytics">
+          <Analytics 
+            wordPerformances={wordPerformances}
+            vocabularyWords={vocabularyWords}
+            totalWordsStudied={totalWordsStudied}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

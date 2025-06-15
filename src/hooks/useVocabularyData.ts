@@ -36,7 +36,7 @@ export function useVocabularyData() {
       }
 
       const primaryDefinition = data.definitions[0];
-      const example = data.examples[0] || `This is an example sentence using the word ${word}.`;
+      const example = data.examples[0] || ''; // Use empty string instead of dummy text
 
       return {
         id: word,

@@ -219,6 +219,7 @@ export function useSpacedRepetition(vocabularyWords: VocabularyWord[]) {
     currentCard,
     sessionStats,
     totalWordsStudied,
+    wordPerformances, // Add this line
     getNextCard,
     recordResponse,
     resetSession,

@@ -72,21 +72,23 @@ export function Flashcard({ word, onResponse }: FlashcardProps) {
                         <p className="text-gray-600 leading-relaxed">{word.definition}</p>
                       </div>
 
-                      {/* Example with image */}
-                      <div className="bg-white rounded-lg p-4 shadow-sm border border-green-100">
-                        <h4 className="font-semibold text-gray-700 mb-2">Example</h4>
-                        <p className="text-gray-600 italic mb-3">"{word.example}"</p>
-                        {word.imageUrl && (
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
-                            <ImageIcon className="h-4 w-4" />
-                            <img 
-                              src={word.imageUrl} 
-                              alt={`Example for ${word.word}`}
-                              className="w-16 h-16 object-cover rounded-md"
-                            />
-                          </div>
-                        )}
-                      </div>
+                      {/* Example - only show if example exists */}
+                      {word.example && word.example.trim() && (
+                        <div className="bg-white rounded-lg p-4 shadow-sm border border-green-100">
+                          <h4 className="font-semibold text-gray-700 mb-2">Example</h4>
+                          <p className="text-gray-600 italic mb-3">"{word.example}"</p>
+                          {word.imageUrl && (
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                              <ImageIcon className="h-4 w-4" />
+                              <img 
+                                src={word.imageUrl} 
+                                alt={`Example for ${word.word}`}
+                                className="w-16 h-16 object-cover rounded-md"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Synonyms */}
                       {word.synonyms.length > 0 && (
