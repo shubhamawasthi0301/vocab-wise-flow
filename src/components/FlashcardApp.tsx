@@ -4,20 +4,27 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RotateCcw, TrendingUp, Brain, BookOpen, AlertCircle, Loader2, BarChart3, ListPlus, Trash2, PlayCircle, X } from 'lucide-react';
+import { RotateCcw, TrendingUp, Brain, BookOpen, AlertCircle, Loader2, BarChart3, ListPlus, Trash2, PlayCircle, X, BrainCircuit } from 'lucide-react';
 import { Flashcard } from './Flashcard';
+import { QuizCard } from './QuizCard';
 import { PerformanceDashboard } from './PerformanceDashboard';
 import { Analytics } from './Analytics';
 import { useVocabularyData } from '@/hooks/useVocabularyData';
 import { useSpacedRepetition } from '@/hooks/useSpacedRepetition';
 import { useSavedVocab } from '@/hooks/useSavedVocab';
+import { useQuiz } from '@/hooks/useQuiz';
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { VocabularyWord } from '@/types/vocabulary';
 
 export function FlashcardApp() {
   const { vocabularyWords, loading, error, refetch, fetchAndAddWords } = useVocabularyData();
   const [useSavedVocabSession, setUseSavedVocabSession] = useState(false);
+  const [studyMode, setStudyMode] = useState<'flashcard' | 'guess-word' | 'guess-definition'>('flashcard');
+  const [currentQuiz, setCurrentQuiz] = useState<{ word: VocabularyWord; question: string; options: string[]; correctAnswer: string; } | null>(null);
 
   // Saved vocab hook
   const {
@@ -45,6 +52,8 @@ export function FlashcardApp() {
     resetSession,
     getPerformanceInsights
   } = useSpacedRepetition(sessionVocabulary);
+  
+  const { generateGuessWordQuestion, generateGuessDefinitionQuestion } = useQuiz(sessionVocabulary);
 
   const [showDashboard, setShowDashboard] = useState(false);
   const [sessionProgress, setSessionProgress] = useState(0);
@@ -56,6 +65,22 @@ export function FlashcardApp() {
   const [isPreparingSession, setIsPreparingSession] = useState(false);
 
   useEffect(() => {
+    if (studyMode === 'flashcard' || !currentCard) {
+      setCurrentQuiz(null);
+      return;
+    }
+    
+    let quizData = null;
+    if (studyMode === 'guess-word') {
+      quizData = generateGuessWordQuestion(currentCard);
+    } else if (studyMode === 'guess-definition') {
+      quizData = generateGuessDefinitionQuestion(currentCard);
+    }
+    setCurrentQuiz(quizData);
+
+  }, [currentCard, studyMode, generateGuessWordQuestion, generateGuessDefinitionQuestion]);
+
+  useEffect(() => {
     if (sessionStats.answered > 0) {
       setSessionProgress((sessionStats.answered / 20) * 100);
     } else {
@@ -65,6 +90,13 @@ export function FlashcardApp() {
 
   const handleCardResponse = (difficulty: 'easy' | 'medium' | 'hard') => {
     recordResponse(difficulty);
+    if (totalWordsStudied >= 50 && sessionStats.answered % 20 === 0) {
+      setShowDashboard(true);
+    }
+  };
+
+  const handleQuizResponse = (isCorrect: boolean) => {
+    recordResponse(isCorrect ? 'easy' : 'hard');
     if (totalWordsStudied >= 50 && sessionStats.answered % 20 === 0) {
       setShowDashboard(true);
     }
@@ -195,6 +227,31 @@ export function FlashcardApp() {
     );
   }
 
+  const emptyState = (
+    <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
+      <CardContent className="p-12 text-center">
+        <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+        <p className="text-gray-500 text-lg">
+          {studyMode !== 'flashcard' && sessionVocabulary.length < 4
+            ? 'Need at least 4 words in your session for quizzes.'
+            : vocabularyWords.length > 0
+            ? 'No more cards in this session!'
+            : 'No words in this session list!'}
+        </p>
+        <Button onClick={() => handleNewSession(useSavedVocabSession)} className="mt-4">
+          Start New Session
+        </Button>
+      </CardContent>
+    </Card>
+  );
+
+  let studyComponent;
+  if (studyMode === 'flashcard') {
+    studyComponent = currentCard ? <Flashcard word={currentCard} onResponse={handleCardResponse} /> : emptyState;
+  } else {
+    studyComponent = currentQuiz ? <QuizCard quiz={currentQuiz} onAnswer={handleQuizResponse} /> : emptyState;
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Header */}
@@ -230,6 +287,30 @@ export function FlashcardApp() {
 
         {/* Flashcard Session */}
         <TabsContent value="flashcards" className="space-y-6">
+          {/* Study Mode */}
+          <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800">
+                <BrainCircuit className="h-5 w-5 text-indigo-600" />
+                Study Mode
+              </h3>
+              <RadioGroup defaultValue="flashcard" onValueChange={(value) => setStudyMode(value as any)} className="flex flex-wrap gap-4 md:gap-8">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="flashcard" id="r1" />
+                  <Label htmlFor="r1">Flashcards</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="guess-word" id="r2" />
+                  <Label htmlFor="r2">Guess the Word</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="guess-definition" id="r3" />
+                  <Label htmlFor="r3">Guess the Definition</Label>
+                </div>
+              </RadioGroup>
+            </CardContent>
+          </Card>
+        
           {/* Progress Section */}
           <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
             <CardContent className="p-6">
@@ -282,23 +363,8 @@ export function FlashcardApp() {
             </CardContent>
           </Card>
 
-          {/* Flashcard */}
-          {currentCard ? (
-            <Flashcard
-              word={currentCard}
-              onResponse={handleCardResponse}
-            />
-          ) : (
-            <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
-              <CardContent className="p-12 text-center">
-                <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">{vocabularyWords.length > 0 ? 'No more cards in this session!' : 'No words in this session list!'}</p>
-                <Button onClick={() => handleNewSession(useSavedVocabSession)} className="mt-4">
-                  Start New Session
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+          {/* Study Component */}
+          {studyComponent}
 
           {/* Show dashboard hint */}
           {totalWordsStudied >= 40 && totalWordsStudied < 50 && (
