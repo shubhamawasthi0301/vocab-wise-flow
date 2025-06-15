@@ -70,8 +70,19 @@ export function Flashcard({ word, onResponse }: FlashcardProps) {
                     <div className="space-y-6">
                       {/* Definition */}
                       <div className="bg-white rounded-lg p-4 shadow-sm border border-blue-100">
-                        <h4 className="font-semibold text-gray-700 mb-2">Definition</h4>
-                        <p className="text-gray-600 leading-relaxed">{word.definition}</p>
+                        <h4 className="font-semibold text-gray-700 mb-2">Definitions</h4>
+                        <div className="space-y-4">
+                          {word.meanings.map((meaning, index) => (
+                            <div key={index}>
+                              <p className="font-semibold text-gray-600 italic capitalize">{meaning.partOfSpeech}</p>
+                              <ul className="list-disc list-inside text-gray-600 leading-relaxed space-y-1 mt-1">
+                                {meaning.definitions.map((def, defIndex) => (
+                                  <li key={defIndex}>{def.definition}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
                       </div>
 
                       {/* Example - only show if example exists */}

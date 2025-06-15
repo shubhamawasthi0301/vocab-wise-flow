@@ -1,8 +1,16 @@
 
+export interface WordMeaning {
+  partOfSpeech: string;
+  definitions: {
+    definition: string;
+    example?: string;
+  }[];
+}
+
 export interface VocabularyWord {
   id: string;
   word: string;
-  definition: string;
+  meanings: WordMeaning[];
   pronunciation: string;
   partOfSpeech: string;
   category: string;

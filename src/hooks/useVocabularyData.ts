@@ -30,20 +30,20 @@ export function useVocabularyData() {
     try {
       const data = await DictionaryApiService.getWordData(word);
       
-      if (data.definitions.length === 0) {
+      if (data.meanings.length === 0 || data.meanings.every(m => m.definitions.length === 0)) {
         console.warn(`No definitions found for word: ${word}`);
         return null;
       }
 
-      const primaryDefinition = data.definitions[0];
+      const primaryPartOfSpeech = data.meanings[0]?.partOfSpeech || 'unknown';
       const example = data.examples[0] || ''; // Use empty string instead of dummy text
 
       return {
         id: word,
         word: data.word,
-        definition: primaryDefinition.definition,
+        meanings: data.meanings,
         pronunciation: data.pronunciation,
-        partOfSpeech: primaryDefinition.partOfSpeech || 'unknown',
+        partOfSpeech: primaryPartOfSpeech,
         category: WORD_CATEGORIES[word as keyof typeof WORD_CATEGORIES] || 'General',
         example: example,
         synonyms: data.synonyms.slice(0, 4), // Limit to 4 synonyms
@@ -80,7 +80,7 @@ export function useVocabularyData() {
       setVocabularyWords([{
         id: 'fallback',
         word: 'Learning',
-        definition: 'The process of acquiring knowledge or skills',
+        meanings: [{ partOfSpeech: 'noun', definitions: [{ definition: 'The process of acquiring knowledge or skills' }] }],
         pronunciation: 'ˈlərniNG',
         partOfSpeech: 'noun',
         category: 'Education',

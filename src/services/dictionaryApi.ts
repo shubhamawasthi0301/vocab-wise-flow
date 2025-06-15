@@ -1,4 +1,3 @@
-
 export interface DictionaryDefinition {
   definition: string;
   synonyms: string[];
@@ -56,33 +55,29 @@ export class DictionaryApiService {
 
       const wordData = data[0];
       
-      // Extract all definitions from all meanings
-      const allDefinitions: { definition: string; partOfSpeech: string; example?: string }[] = [];
+      const meanings = wordData.meanings.map(meaning => ({
+        partOfSpeech: meaning.partOfSpeech,
+        definitions: meaning.definitions.map(def => ({
+          definition: def.definition,
+          example: def.example,
+        })),
+      }));
+
+      // Extract all synonyms, antonyms, examples from all meanings and definitions
       const allSynonyms: string[] = [];
       const allAntonyms: string[] = [];
       const allExamples: string[] = [];
 
       wordData.meanings.forEach(meaning => {
+        allSynonyms.push(...meaning.synonyms);
+        allAntonyms.push(...meaning.antonyms);
         meaning.definitions.forEach(def => {
-          allDefinitions.push({
-            definition: def.definition,
-            partOfSpeech: meaning.partOfSpeech,
-            example: def.example
-          });
-          
-          // Collect examples
+          allSynonyms.push(...def.synonyms);
+          allAntonyms.push(...def.antonyms);
           if (def.example) {
             allExamples.push(def.example);
           }
-          
-          // Collect synonyms and antonyms
-          allSynonyms.push(...def.synonyms);
-          allAntonyms.push(...def.antonyms);
         });
-        
-        // Also collect synonyms/antonyms from meaning level
-        allSynonyms.push(...meaning.synonyms);
-        allAntonyms.push(...meaning.antonyms);
       });
 
       // Get pronunciation - prefer the one with audio
@@ -93,10 +88,10 @@ export class DictionaryApiService {
         word: wordData.word,
         pronunciation,
         audioUrl: pronunciationWithAudio?.audio,
-        definitions: allDefinitions,
+        meanings,
         synonyms: [...new Set(allSynonyms)], // Remove duplicates
         antonyms: [...new Set(allAntonyms)], // Remove duplicates
-        examples: allExamples
+        examples: allExamples,
       };
     } catch (error) {
       console.error(`Failed to fetch data for word: ${word}`, error);
