@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RotateCcw, TrendingUp, Brain, BookOpen, AlertCircle, Loader2, BarChart3, ListPlus, Trash2, PlayCircle } from 'lucide-react';
+import { RotateCcw, TrendingUp, Brain, BookOpen, AlertCircle, Loader2, BarChart3, ListPlus, Trash2, PlayCircle, X } from 'lucide-react';
 import { Flashcard } from './Flashcard';
 import { PerformanceDashboard } from './PerformanceDashboard';
 import { Analytics } from './Analytics';
@@ -218,7 +218,7 @@ export function FlashcardApp() {
                   </Badge>
                 </div>
                 <Button
-                  onClick={handleNewSession}
+                  onClick={() => handleNewSession()}
                   variant="outline"
                   size="sm"
                   className="gap-2"
