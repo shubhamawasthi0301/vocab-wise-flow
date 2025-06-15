@@ -25,16 +25,11 @@ export interface WordApiExamplesResponse {
 }
 
 const API_BASE_URL = 'https://wordsapiv1.p.mashape.com/words';
-const API_HEADERS = {
-  'X-RapidAPI-Key': 'YOUR_API_KEY_HERE', // This will need to be set by the user
-  'X-RapidAPI-Host': 'wordsapiv1.p.mashape.com'
-};
 
 export class WordsApiService {
   private static async makeRequest<T>(url: string): Promise<T> {
     const response = await fetch(url, {
-      method: 'GET',
-      headers: API_HEADERS
+      method: 'GET'
     });
     
     if (!response.ok) {
