@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { VocabularyWord, WordPerformance, PerformanceInsights } from '@/types/vocabulary';
 
 interface SessionStats {
@@ -103,6 +102,11 @@ export function useSpacedRepetition(vocabularyWords: VocabularyWord[]) {
       getNextCard();
     }
   }, [vocabularyWords, currentCard, sessionStats.answered, getNextCard]);
+
+  // Reset session and fetch new card whenever the word list changes.
+  useEffect(() => {
+    resetSession();
+  }, [vocabularyWords]);
 
   // Record user response and update performance
   const recordResponse = useCallback((difficulty: 'easy' | 'medium' | 'hard') => {

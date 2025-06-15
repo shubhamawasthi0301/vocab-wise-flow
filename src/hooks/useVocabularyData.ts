@@ -97,10 +97,36 @@ export function useVocabularyData() {
     loadVocabularyWords();
   }, []);
 
+  const fetchAndAddWords = async (words: string[]) => {
+    const existingWordStrings = vocabularyWords.map(vw => vw.word.toLowerCase());
+    const wordsToFetch = words.filter(w => !existingWordStrings.includes(w.toLowerCase()));
+
+    if (wordsToFetch.length === 0) {
+      return; // Nothing to fetch
+    }
+
+    try {
+      const wordPromises = wordsToFetch.map(word => fetchWordData(word));
+      const results = await Promise.all(wordPromises);
+      const validNewWords = results.filter((word): word is VocabularyWord => word !== null);
+      
+      if (validNewWords.length > 0) {
+        setVocabularyWords(prev => {
+          const newWordsToAdd = validNewWords.filter(nw => !prev.some(pw => pw.id === nw.id));
+          return [...prev, ...newWordsToAdd];
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching additional words:', err);
+      throw new Error("Failed to fetch custom vocabulary words.");
+    }
+  };
+
   return {
     vocabularyWords,
     loading,
     error,
-    refetch: loadVocabularyWords
+    refetch: loadVocabularyWords,
+    fetchAndAddWords
   };
 }

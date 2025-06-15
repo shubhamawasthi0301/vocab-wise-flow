@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 
 export function FlashcardApp() {
-  const { vocabularyWords, loading, error, refetch } = useVocabularyData();
+  const { vocabularyWords, loading, error, refetch, fetchAndAddWords } = useVocabularyData();
   const [useSavedVocabSession, setUseSavedVocabSession] = useState(false);
 
   // Saved vocab hook
@@ -37,7 +37,6 @@ export function FlashcardApp() {
     sessionStats,
     totalWordsStudied,
     wordPerformances,
-    getNextCard,
     recordResponse,
     resetSession,
     getPerformanceInsights
@@ -52,10 +51,13 @@ export function FlashcardApp() {
   // Input state for adding words
   const [addInput, setAddInput] = useState("");
   const [adding, setAdding] = useState(false);
+  const [isPreparingSession, setIsPreparingSession] = useState(false);
 
   useEffect(() => {
     if (sessionStats.answered > 0) {
       setSessionProgress((sessionStats.answered / 20) * 100);
+    } else {
+      setSessionProgress(0);
     }
   }, [sessionStats.answered]);
 
@@ -68,15 +70,16 @@ export function FlashcardApp() {
 
   const handleNewSession = (useSaved = false) => {
     setUseSavedVocabSession(useSaved);
-    resetSession();
     setSessionProgress(0);
     setShowDashboard(false);
     setActiveTab('flashcards');
     if(useSaved && savedVocab.length === 0) {
       toast({ title: "No saved vocabulary", description: "Please add vocab words first." });
       setUseSavedVocabSession(false);
-    } else if (useSaved) {
-      toast({ title: "New session!", description: "Using your saved vocabs." });
+    } else if (useSaved && savedVocab.length > 0) {
+       toast({ title: "New session!", description: `Starting with your ${savedVocab.length} saved words.` });
+    } else if (!useSaved) {
+       toast({ title: "New session!", description: "Starting with general vocabulary." });
     }
   };
 
@@ -103,6 +106,27 @@ export function FlashcardApp() {
         </span>
       )
     });
+  };
+
+  const handleStartSavedVocabSession = async () => {
+    if (savedVocab.length === 0) {
+      toast({ title: "No saved vocabulary", description: "Please add vocab words first." });
+      return;
+    }
+    
+    setIsPreparingSession(true);
+    try {
+      await fetchAndAddWords(savedVocab);
+      handleNewSession(true);
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Could not fetch data for your saved words. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPreparingSession(false);
+    }
   };
 
   if (loading) {
@@ -365,15 +389,19 @@ export function FlashcardApp() {
 
               <div className="flex gap-3">
                 <Button
-                  disabled={savedVocab.length === 0}
-                  onClick={() => handleNewSession(true)}
+                  disabled={savedVocab.length === 0 || isPreparingSession}
+                  onClick={handleStartSavedVocabSession}
                   className="gap-2"
                 >
-                  <PlayCircle className="h-5 w-5" />
-                  Start Practice Session With My List
+                  {isPreparingSession ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <PlayCircle className="h-5 w-5" />
+                  )}
+                  {isPreparingSession ? "Preparing..." : "Start Practice Session With My List"}
                 </Button>
                 <Button
-                  disabled={savedVocab.length === 0}
+                  disabled={savedVocab.length === 0 || isPreparingSession}
                   variant="outline"
                   onClick={() => {
                     clearSavedVocab();
