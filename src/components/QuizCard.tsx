@@ -67,7 +67,7 @@ export function QuizCard({ quiz, onAnswer }: QuizCardProps) {
                 <Button
                   key={index}
                   variant="outline"
-                  className={cn("w-full flex items-center gap-4 p-4", getButtonClass(option))}
+                  className={cn("w-full flex items-center gap-4 p-4 whitespace-normal", getButtonClass(option))}
                   onClick={() => handleSelectAnswer(option)}
                   disabled={isAnswered}
                 >
