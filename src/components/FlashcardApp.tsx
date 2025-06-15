@@ -4,15 +4,34 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RotateCcw, TrendingUp, Brain, BookOpen, AlertCircle, Loader2, BarChart3 } from 'lucide-react';
+import { RotateCcw, TrendingUp, Brain, BookOpen, AlertCircle, Loader2, BarChart3, ListPlus, Trash2, PlayCircle } from 'lucide-react';
 import { Flashcard } from './Flashcard';
 import { PerformanceDashboard } from './PerformanceDashboard';
 import { Analytics } from './Analytics';
 import { useVocabularyData } from '@/hooks/useVocabularyData';
 import { useSpacedRepetition } from '@/hooks/useSpacedRepetition';
+import { useSavedVocab } from '@/hooks/useSavedVocab';
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { toast } from "@/hooks/use-toast";
 
 export function FlashcardApp() {
   const { vocabularyWords, loading, error, refetch } = useVocabularyData();
+  const [useSavedVocabSession, setUseSavedVocabSession] = useState(false);
+
+  // Saved vocab hook
+  const {
+    savedVocab,
+    addWords: addSavedWords,
+    removeWord: removeSavedWord,
+    clearAll: clearSavedVocab
+  } = useSavedVocab();
+
+  // Used vocabulary list for the current session
+  const vocabListToUse = useSavedVocabSession && savedVocab.length > 0
+    ? savedVocab
+    : vocabularyWords.map(w => w.word);
+
   const {
     currentCard,
     sessionStats,
@@ -22,11 +41,17 @@ export function FlashcardApp() {
     recordResponse,
     resetSession,
     getPerformanceInsights
-  } = useSpacedRepetition(vocabularyWords);
+  } = useSpacedRepetition(
+    vocabularyWords.filter(w => vocabListToUse.includes(w.word))
+  );
 
   const [showDashboard, setShowDashboard] = useState(false);
   const [sessionProgress, setSessionProgress] = useState(0);
   const [activeTab, setActiveTab] = useState('flashcards');
+
+  // Input state for adding words
+  const [addInput, setAddInput] = useState("");
+  const [adding, setAdding] = useState(false);
 
   useEffect(() => {
     if (sessionStats.answered > 0) {
@@ -36,18 +61,48 @@ export function FlashcardApp() {
 
   const handleCardResponse = (difficulty: 'easy' | 'medium' | 'hard') => {
     recordResponse(difficulty);
-    
-    // Show dashboard after 50+ words studied
     if (totalWordsStudied >= 50 && sessionStats.answered % 20 === 0) {
       setShowDashboard(true);
     }
   };
 
-  const handleNewSession = () => {
+  const handleNewSession = (useSaved = false) => {
+    setUseSavedVocabSession(useSaved);
     resetSession();
     setSessionProgress(0);
     setShowDashboard(false);
     setActiveTab('flashcards');
+    if(useSaved && savedVocab.length === 0) {
+      toast({ title: "No saved vocabulary", description: "Please add vocab words first." });
+      setUseSavedVocabSession(false);
+    } else if (useSaved) {
+      toast({ title: "New session!", description: "Using your saved vocabs." });
+    }
+  };
+
+  // Add new vocabulary to saved list
+  const handleAddWords = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addInput.trim()) {
+      toast({ title: "Empty input", description: "Enter at least one word." });
+      return;
+    }
+    const words = addInput.split(",").map(w => w.trim()).filter(Boolean);
+    if (words.length === 0) {
+      toast({ title: "No valid words", description: "Enter valid words separated by commas." });
+      return;
+    }
+    addSavedWords(words);
+    setAddInput("");
+    setAdding(false);
+    toast({
+      title: "Word(s) added",
+      description: (
+        <span>
+          {words.length > 1 ? `${words.length} words` : words[0]} added to your saved vocabs!
+        </span>
+      )
+    });
   };
 
   if (loading) {
@@ -131,7 +186,7 @@ export function FlashcardApp() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
           <TabsTrigger value="flashcards" className="gap-2">
             <BookOpen className="h-4 w-4" />
             Flashcards
@@ -140,8 +195,13 @@ export function FlashcardApp() {
             <BarChart3 className="h-4 w-4" />
             Analytics
           </TabsTrigger>
+          <TabsTrigger value="myvocab" className="gap-2">
+            <ListPlus className="h-4 w-4" />
+            My Saved Vocabs
+          </TabsTrigger>
         </TabsList>
 
+        {/* Flashcard Session */}
         <TabsContent value="flashcards" className="space-y-6">
           {/* Progress Section */}
           <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
@@ -206,7 +266,7 @@ export function FlashcardApp() {
               <CardContent className="p-12 text-center">
                 <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 text-lg">No more cards in this session!</p>
-                <Button onClick={handleNewSession} className="mt-4">
+                <Button onClick={() => handleNewSession(useSavedVocabSession)} className="mt-4">
                   Start New Session
                 </Button>
               </CardContent>
@@ -225,12 +285,108 @@ export function FlashcardApp() {
           )}
         </TabsContent>
 
+        {/* Analytics */}
         <TabsContent value="analytics">
           <Analytics 
             wordPerformances={wordPerformances}
             vocabularyWords={vocabularyWords}
             totalWordsStudied={totalWordsStudied}
           />
+        </TabsContent>
+
+        {/* My Saved Vocabs */}
+        <TabsContent value="myvocab">
+          <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
+            <CardContent className="p-8">
+              <div className="mb-5 flex items-center gap-4 justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold mb-1 flex items-center gap-2">
+                    <ListPlus className="h-5 w-5" />
+                    My Saved Vocab List
+                  </h2>
+                  <p className="text-gray-600 text-sm">
+                    Add words (separated by commas): e.g., <span className="italic">serendipity, ineffable, ubiquitous</span>
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant={adding ? "secondary" : "default"}
+                  className="gap-1"
+                  onClick={() => setAdding(v => !v)}
+                >
+                  <ListPlus className="h-4 w-4" />
+                  {adding ? "Cancel" : "Add Words"}
+                </Button>
+              </div>
+
+              {/* Add word input form */}
+              {adding && (
+                <form className="flex flex-col md:flex-row gap-2 mb-6" onSubmit={handleAddWords}>
+                  <Input
+                    type="text"
+                    placeholder="Enter word or words, comma separated"
+                    value={addInput}
+                    onChange={e => setAddInput(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button type="submit" variant="secondary" className="gap-2">
+                    <ListPlus className="h-4 w-4" />
+                    Add
+                  </Button>
+                </form>
+              )}
+
+              {/* Saved vocab list */}
+              <div className="mb-6">
+                {savedVocab.length === 0 ? (
+                  <div className="text-gray-600 italic">No saved vocab words yet. Add some above!</div>
+                ): (
+                  <div className="flex flex-wrap gap-2">
+                    {savedVocab.map(w => (
+                      <Badge
+                        key={w}
+                        variant="secondary"
+                        className="flex items-center bg-blue-100 text-blue-700 px-3 py-1"
+                      >
+                        {w}
+                        <button
+                          onClick={() => removeSavedWord(w)}
+                          className="ml-2 focus:outline-none text-gray-400 hover:text-red-500"
+                          type="button"
+                          aria-label={`Remove ${w}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  disabled={savedVocab.length === 0}
+                  onClick={() => handleNewSession(true)}
+                  className="gap-2"
+                >
+                  <PlayCircle className="h-5 w-5" />
+                  Start Practice Session With My List
+                </Button>
+                <Button
+                  disabled={savedVocab.length === 0}
+                  variant="outline"
+                  onClick={() => {
+                    clearSavedVocab();
+                    toast({ title: "Cleared!", description: "All saved vocab removed." });
+                  }}
+                  className="gap-1"
+                >
+                  <Trash2 className="h-5 w-5" />
+                  Clear All
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
