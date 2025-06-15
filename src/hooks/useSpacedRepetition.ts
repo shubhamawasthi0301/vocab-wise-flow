@@ -114,6 +114,8 @@ export function useSpacedRepetition(vocabularyWords: VocabularyWord[]) {
   const recordResponse = useCallback((difficulty: 'easy' | 'medium' | 'hard') => {
     if (!currentCard) return;
 
+    const isNewWord = !wordPerformances[currentCard.id];
+
     const difficultyScores = { easy: 0.1, medium: 0.5, hard: 0.9 };
     const accuracyScores = { easy: 1.0, medium: 0.7, hard: 0.3 };
     
@@ -152,14 +154,10 @@ export function useSpacedRepetition(vocabularyWords: VocabularyWord[]) {
       [difficulty]: prev[difficulty] + 1
     }));
 
-    // Update total words studied
-    setTotalWordsStudied(prev => {
-      const currentPerf = wordPerformances[currentCard.id];
-      if (!currentPerf || currentPerf.attempts === 0) {
-        return prev + 1; // First time seeing this word
-      }
-      return prev;
-    });
+    // Update total words studied only if it's a new word
+    if (isNewWord) {
+      setTotalWordsStudied(prev => prev + 1);
+    }
 
     // Get next card
     setTimeout(() => {

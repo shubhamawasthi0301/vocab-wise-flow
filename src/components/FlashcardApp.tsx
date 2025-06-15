@@ -88,18 +88,19 @@ export function FlashcardApp() {
     }
   }, [sessionStats.answered]);
 
-  const handleCardResponse = (difficulty: 'easy' | 'medium' | 'hard') => {
-    recordResponse(difficulty);
-    if (totalWordsStudied >= 50 && sessionStats.answered % 20 === 0) {
+  useEffect(() => {
+    // Show dashboard at the end of a session if enough words have been studied
+    if (sessionStats.answered === 20 && totalWordsStudied >= 50) {
       setShowDashboard(true);
     }
+  }, [sessionStats.answered, totalWordsStudied]);
+
+  const handleCardResponse = (difficulty: 'easy' | 'medium' | 'hard') => {
+    recordResponse(difficulty);
   };
 
   const handleQuizResponse = (isCorrect: boolean) => {
     recordResponse(isCorrect ? 'easy' : 'hard');
-    if (totalWordsStudied >= 50 && sessionStats.answered % 20 === 0) {
-      setShowDashboard(true);
-    }
   };
 
   const handleNewSession = (useSaved = false) => {
@@ -222,7 +223,7 @@ export function FlashcardApp() {
         insights={getPerformanceInsights()}
         totalWords={totalWordsStudied}
         onContinue={() => setShowDashboard(false)}
-        onNewSession={handleNewSession}
+        onNewSession={() => handleNewSession()}
       />
     );
   }
