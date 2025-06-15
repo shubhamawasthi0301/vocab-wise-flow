@@ -44,9 +44,11 @@ export function Flashcard({ word, onResponse }: FlashcardProps) {
                     <h2 className="text-5xl font-bold mb-4 tracking-wide">
                       {word.word}
                     </h2>
-                    <p className="text-xl opacity-90 mb-8">
-                      [{word.pronunciation}]
-                    </p>
+                    {word.pronunciation && word.pronunciation.trim() && (
+                      <p className="text-xl opacity-90 mb-8">
+                        [{word.pronunciation}]
+                      </p>
+                    )}
                     <Button
                       onClick={handleFlip}
                       variant="secondary"
