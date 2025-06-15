@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -27,10 +27,14 @@ export function FlashcardApp() {
     clearAll: clearSavedVocab
   } = useSavedVocab();
 
-  // Used vocabulary list for the current session
-  const vocabListToUse = useSavedVocabSession && savedVocab.length > 0
-    ? savedVocab
-    : vocabularyWords.map(w => w.word);
+  // Memoize the vocabulary list for the current session to prevent re-renders
+  const sessionVocabulary = useMemo(() => {
+    if (useSavedVocabSession && savedVocab.length > 0) {
+      const savedWordsLower = savedVocab.map(w => w.toLowerCase());
+      return vocabularyWords.filter(w => savedWordsLower.includes(w.word.toLowerCase()));
+    }
+    return vocabularyWords;
+  }, [vocabularyWords, savedVocab, useSavedVocabSession]);
 
   const {
     currentCard,
@@ -40,9 +44,7 @@ export function FlashcardApp() {
     recordResponse,
     resetSession,
     getPerformanceInsights
-  } = useSpacedRepetition(
-    vocabularyWords.filter(w => vocabListToUse.includes(w.word))
-  );
+  } = useSpacedRepetition(sessionVocabulary);
 
   const [showDashboard, setShowDashboard] = useState(false);
   const [sessionProgress, setSessionProgress] = useState(0);
@@ -81,6 +83,7 @@ export function FlashcardApp() {
     } else if (!useSaved) {
        toast({ title: "New session!", description: "Starting with general vocabulary." });
     }
+    resetSession();
   };
 
   // Add new vocabulary to saved list
@@ -289,7 +292,7 @@ export function FlashcardApp() {
             <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
               <CardContent className="p-12 text-center">
                 <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">No more cards in this session!</p>
+                <p className="text-gray-500 text-lg">{vocabularyWords.length > 0 ? 'No more cards in this session!' : 'No words in this session list!'}</p>
                 <Button onClick={() => handleNewSession(useSavedVocabSession)} className="mt-4">
                   Start New Session
                 </Button>

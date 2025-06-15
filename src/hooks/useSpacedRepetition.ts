@@ -105,7 +105,9 @@ export function useSpacedRepetition(vocabularyWords: VocabularyWord[]) {
 
   // Reset session and fetch new card whenever the word list changes.
   useEffect(() => {
-    resetSession();
+    if (vocabularyWords.length > 0) {
+        resetSession();
+    }
   }, [vocabularyWords]);
 
   // Record user response and update performance
