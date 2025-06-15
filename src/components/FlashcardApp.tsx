@@ -72,11 +72,34 @@ export function FlashcardApp() {
     setSessionProgress(0);
     setShowDashboard(false);
     setActiveTab('flashcards');
-    if(useSaved && savedVocab.length === 0) {
-      toast({ title: "No saved vocabulary", description: "Please add vocab words first." });
-      setUseSavedVocabSession(false);
-    } else if (useSaved) {
-      toast({ title: "New session!", description: "Using your saved vocabs." });
+
+    if (useSaved) {
+      // Find which saved vocab words are present in the master vocabularyWords list
+      const matchedWords = savedVocab.filter(saved => 
+        vocabularyWords.some(vw => vw.word === saved)
+      );
+      const missingWords = savedVocab.filter(saved =>
+        !vocabularyWords.some(vw => vw.word === saved)
+      );
+
+      if (savedVocab.length === 0) {
+        toast({ title: "No saved vocabulary", description: "Please add vocab words first." });
+        setUseSavedVocabSession(false);
+      } else if (matchedWords.length === 0) {
+        toast({
+          title: "No matches found",
+          description: "None of your saved vocab match the available vocabulary. Please check your spelling or add more words."
+        });
+        setUseSavedVocabSession(false);
+      } else {
+        if (missingWords.length > 0) {
+          toast({
+            title: "Some words not found",
+            description: `These words aren't in the practice set and will be skipped: ${missingWords.join(", ")}`
+          });
+        }
+        toast({ title: "New session!", description: "Using your saved vocabs." });
+      }
     }
   };
 
