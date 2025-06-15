@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { VocabularyWord, WordPerformance, PerformanceInsights } from '@/types/vocabulary';
 
@@ -38,13 +39,6 @@ export function useSpacedRepetition(vocabularyWords: VocabularyWord[]) {
     }));
   }, [wordPerformances, totalWordsStudied]);
 
-  // When the list of words changes, reset the session automatically.
-  useEffect(() => {
-    setSessionStats({ answered: 0, easy: 0, medium: 0, hard: 0 });
-    setSessionWords([]);
-    setCurrentCard(null);
-  }, [vocabularyWords]);
-
   // Calculate word priority based on performance
   const calculateWordPriority = useCallback((word: VocabularyWord): number => {
     const performance = wordPerformances[word.id];
@@ -84,15 +78,10 @@ export function useSpacedRepetition(vocabularyWords: VocabularyWord[]) {
     }));
 
     // Sort by priority (highest first) and filter out recently shown words
-    let availableWords = wordPriorities
+    const availableWords = wordPriorities
       .filter(wp => !sessionWords.slice(-5).includes(wp.word.id)) // Don't repeat last 5 words
       .sort((a, b) => b.priority - a.priority);
 
-    // If filtering removed all words (e.g. on a small list), fall back to the full list to avoid ending session.
-    if (availableWords.length === 0 && vocabularyWords.length > 0) {
-      availableWords = wordPriorities.sort((a, b) => b.priority - a.priority);
-    }
-    
     if (availableWords.length === 0) {
       setCurrentCard(null);
       return null;
@@ -108,7 +97,7 @@ export function useSpacedRepetition(vocabularyWords: VocabularyWord[]) {
     return selectedWord;
   }, [vocabularyWords, sessionStats.answered, sessionWords, calculateWordPriority]);
 
-  // Initialize first card or get next card if needed
+  // Initialize first card
   useEffect(() => {
     if (!currentCard && vocabularyWords.length > 0 && sessionStats.answered < 20) {
       getNextCard();

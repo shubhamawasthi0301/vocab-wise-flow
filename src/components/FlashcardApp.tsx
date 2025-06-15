@@ -67,46 +67,16 @@ export function FlashcardApp() {
   };
 
   const handleNewSession = (useSaved = false) => {
+    setUseSavedVocabSession(useSaved);
+    resetSession();
     setSessionProgress(0);
     setShowDashboard(false);
     setActiveTab('flashcards');
-
-    let startSavedSession = useSaved;
-
-    if (useSaved) {
-      const matchedWords = savedVocab.filter(saved => 
-        vocabularyWords.some(vw => vw.word === saved)
-      );
-      
-      if (savedVocab.length === 0) {
-        toast({ title: "No saved vocabulary", description: "Please add vocab words first." });
-        startSavedSession = false;
-      } else if (matchedWords.length === 0) {
-        toast({
-          title: "No matches found",
-          description: "None of your saved vocab match the available vocabulary."
-        });
-        startSavedSession = false;
-      } else {
-        const missingWords = savedVocab.filter(saved =>
-            !vocabularyWords.some(vw => vw.word === saved)
-        );
-        if (missingWords.length > 0) {
-          toast({
-            title: "Some words not found",
-            description: `These words aren't in the practice set and will be skipped: ${missingWords.join(", ")}`
-          });
-        }
-        if (useSaved) {
-            toast({ title: "New session!", description: "Using your saved vocabs." });
-        }
-      }
-    }
-
-    if (startSavedSession !== useSavedVocabSession) {
-      setUseSavedVocabSession(startSavedSession);
-    } else {
-      resetSession();
+    if(useSaved && savedVocab.length === 0) {
+      toast({ title: "No saved vocabulary", description: "Please add vocab words first." });
+      setUseSavedVocabSession(false);
+    } else if (useSaved) {
+      toast({ title: "New session!", description: "Using your saved vocabs." });
     }
   };
 
